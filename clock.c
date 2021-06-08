@@ -1853,7 +1853,11 @@ static void handle_state_decision_event(struct clock *c)
 	LIST_FOREACH(piter, &c->ports, list) {
 		enum port_state ps;
 		enum fsm_event event;
-		ps = bmc_state_decision(c, piter, c->dscmp);
+        if (is_ext_port_config_enabled(piter)) {
+		    ps = desired_port_state(piter);
+        } else {
+		    ps = bmc_state_decision(c, piter, c->dscmp);
+        }
 		switch (ps) {
 		case PS_LISTENING:
 			event = EV_NONE;

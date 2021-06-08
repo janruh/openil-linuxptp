@@ -58,6 +58,10 @@ struct tc_txd {
 	int ingress_port;
 };
 
+struct ExternalPortConfiguration {
+    enum port_state desiredState;
+};
+
 struct port {
 	LIST_ENTRY(port) list;
 	char *name;
@@ -106,6 +110,8 @@ struct port {
 	enum port_state     state; /*portState*/
 	Integer64           asymmetry;
 	enum as_capable     asCapable;
+    Integer8            externalPortConfigurationEnabled;
+    struct ExternalPortConfiguration externalPortConfiguration;
 	Integer8            logMinDelayReqInterval;
 	TimeInterval        peerMeanPathDelay;
 	Integer8            initialLogAnnounceInterval;

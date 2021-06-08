@@ -57,7 +57,7 @@ typedef union {
 	char *s;
 } any_t;
 
-#define CONFIG_LABEL_SIZE 32
+#define CONFIG_LABEL_SIZE 64
 
 #define CFG_ITEM_STATIC (1 << 0) /* statically allocated, not to be freed */
 #define CFG_ITEM_LOCKED (1 << 1) /* command line value, may not be changed */
@@ -310,6 +310,8 @@ struct config_item config_tab[] = {
 	GLOB_ITEM_STR("userDescription", ""),
 	GLOB_ITEM_INT("utc_offset", CURRENT_UTC_OFFSET, 0, INT_MAX),
 	GLOB_ITEM_INT("verbose", 0, 0, 1),
+	PORT_ITEM_INT("externalPortConfigurationEnabled", 0, 0, 1),
+	PORT_ITEM_STR("externalPortConfiguration.desiredState", "DisabledPort"),
 };
 
 static struct unicast_master_table *current_uc_mtab;

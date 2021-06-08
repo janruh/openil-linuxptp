@@ -1718,6 +1718,7 @@ int port_initialize(struct port *p)
 {
 	struct config *cfg = clock_config(p->clock);
 	int fd[N_TIMER_FDS], i;
+    char *desiredState;
 
 	p->multiple_seq_pdr_count  = 0;
 	p->multiple_pdr_detected   = 0;
@@ -1742,12 +1743,32 @@ int port_initialize(struct port *p)
 	p->operLogPdelayReqInterval = config_get_int(cfg, p->name, "operLogPdelayReqInterval");
 	p->neighborPropDelayThresh = config_get_int(cfg, p->name, "neighborPropDelayThresh");
 	p->min_neighbor_prop_delay = config_get_int(cfg, p->name, "min_neighbor_prop_delay");
+    p->externalPortConfigurationEnabled = config_get_int(cfg, p->name, "externalPortConfigurationEnabled");
+
+    if (config_get_int(cfg, p->name, "domainNumber") == 0) {
+        p->externalPortConfigurationEnabled = 0;
+    }
 
 	if (config_get_int(cfg, p->name, "asCapable") == AS_CAPABLE_TRUE) {
 		p->asCapable = ALWAYS_CAPABLE;
 	} else {
 		p->asCapable = NOT_CAPABLE;
 	}
+
+    desiredState = config_get_string(cfg, p->name, "externalPortConfiguration.desiredState");
+    if (!strcmp(desiredState, "MasterPort")) {
+        p->externalPortConfiguration.desiredState = PS_MASTER; 
+    } else if (!strcmp(desiredState, "SlavePort")) {
+        p->externalPortConfiguration.desiredState = PS_SLAVE; 
+    } else if (!strcmp(desiredState, "PassivePort")) {
+        p->externalPortConfiguration.desiredState = PS_PASSIVE; 
+    } else if (!strcmp(desiredState, "DisabledPort")) {
+        p->externalPortConfiguration.desiredState = PS_DISABLED; 
+    } else {
+        pr_err("desiredState must be one of the following 'MasterPort', 'SlavePort',"
+                "'PassivePort', or 'DisabledPort'\n");
+        return -1;
+    }
 
 	p->inhibit_delay_req = config_get_int(cfg, p->name, "inhibit_delay_req");
 	if (p->inhibit_delay_req && p->asCapable != ALWAYS_CAPABLE) {
@@ -3093,9 +3114,10 @@ struct port *port_open(int phc_index,
 		p->asCapable = ALWAYS_CAPABLE;
 	} else {
 		p->asCapable = NOT_CAPABLE;
+        p->state = PS_DISABLED;
 	}
 
-	if (p->bmca == BMCA_NOOP && transport != TRANS_UDS) {
+	if (p->bmca == BMCA_NOOP && transport != TRANS_UDS && !p->externalPortConfigurationEnabled) {
 		if (p->master_only) {
 			p->state_machine = designated_master_fsm;
 		} else if (clock_slave_only(clock)) {
@@ -3175,6 +3197,16 @@ err_transport:
 err_port:
 	free(p);
 	return NULL;
+}
+
+enum port_state desired_port_state(struct port *port)
+{
+    return port->externalPortConfiguration.desiredState;
+}
+
+int is_ext_port_config_enabled(struct port *port)
+{
+    return port->externalPortConfigurationEnabled;
 }
 
 enum port_state port_state(struct port *port)

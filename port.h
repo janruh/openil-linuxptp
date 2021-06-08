@@ -213,6 +213,20 @@ struct port *port_open(int phc_index,
 enum port_state port_state(struct port *port);
 
 /**
+ * Returns a port's desired state.
+ * @param port  A port instance.
+ * @return      One of the @ref port_state values.
+ */
+enum port_state desired_port_state(struct port *port);
+
+/**
+ * Returns whether external port configuration is enabled
+ * @param port  A port instance.
+ * @return      One (1) if external port configuration is enabled, zero otherwise.
+ */
+int is_ext_port_config_enabled(struct port *port);
+
+/**
  * Update a port's current state based on a given event.
  * @param p        A pointer previously obtained via port_open().
  * @param event    One of the @a fsm_event codes.
